@@ -2,8 +2,6 @@
 
 #include <libhat/scanner.hpp>
 
-#include "def.hpp"
-
 #include <idp.hpp>
 
 struct libhat_ida : public plugmod_t {
@@ -11,6 +9,7 @@ struct libhat_ida : public plugmod_t {
 
      libhat_ida();
 
-     void show_results_chooser( std::vector<hat::scan_result>&, qstring&);
+     void show_results_chooser(std::vector<hat::scan_result> &, qstring &);
+
      bool idaapi run(size_t arg) override;
 };

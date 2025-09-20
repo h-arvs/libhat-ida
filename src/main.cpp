@@ -1,7 +1,7 @@
 #include "libhat_ida.hpp"
 #include <hexrays.hpp>
 
-static plugmod_t* idaapi init() {
+static plugmod_t * idaapi init() {
     return new libhat_ida;
 }
 

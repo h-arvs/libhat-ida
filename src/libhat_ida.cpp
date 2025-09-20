@@ -9,21 +9,20 @@ libhat_ida::libhat_ida() {
 
     bytes.resize(size);
 
-    get_bytes(bytes.data(), static_cast<ssize_t>(size), start, GMB_READALL);
+    get_bytes(bytes.data(), size, start, GMB_READALL);
 }
 
-void libhat_ida::show_results_chooser( std::vector<hat::scan_result> & results, qstring & pattern) {
+void libhat_ida::show_results_chooser(std::vector<hat::scan_result> &results, qstring &pattern) {
     auto chooser = new results_chooser{bytes.data(), results, pattern};
     chooser->choose();
 }
 
 bool libhat_ida::run(size_t arg) {
-
     qstring pattern;
     auto action = ask_form(
         "Scan for a pattern\n"
         "<Pattern:q:-1:50>\n",
-    &pattern);
+        &pattern);
 
     if (action) {
         if (!pattern.empty()) {
