@@ -3,7 +3,7 @@ An [IDA Pro](https://hex-rays.com/ida-pro) pattern scanner plugin powered by [Li
 
 ## Usage
 
-1. Download latest release dll (or source for compilation) for preferred ida version from [releases](./releases)
+1. Download latest release dll (or source for compilation) for preferred ida version from [releases](https://github.com/h-arvs/libhat-ida/releases)
 2. Move dll file into YOUR_IDA_DIRECTORY/plugins
 3. Load any binary
 4. Use default hotkey Alt+B to run libhat-ida or run via Edit -> Plugins -> Libhat
