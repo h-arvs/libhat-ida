@@ -1,0 +1,1 @@
+If compiling yourself populate this directory with the IDA library from your IDA sdk install and preferred target
