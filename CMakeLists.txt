@@ -15,5 +15,7 @@ FetchContent_MakeAvailable(libhat)
 file(GLOB_RECURSE src CONFIGURE_DEPENDS "src/*.cpp" "src/*.hpp")
 add_library(libhat_ida SHARED ${src})
 
+add_compile_definitions("__EA64__")
+
 target_link_libraries(libhat_ida PRIVATE ${CMAKE_SOURCE_DIR}/ida-sdk/lib/ida.lib libhat)
 target_include_directories(libhat_ida PRIVATE ./ida-sdk/include/)
