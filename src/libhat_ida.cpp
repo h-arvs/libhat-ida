@@ -19,26 +19,41 @@ void libhat_ida::show_results_chooser(std::vector<hat::scan_result> &results, qs
 
 bool libhat_ida::run(size_t arg) {
     qstring pattern;
+    ushort checkboxesBitmask;
     auto action = ask_form(
         "Scan for a pattern\n"
-        "<Pattern:q:-1:50>\n",
-        &pattern);
+        "<Pattern:q:-1:50>\n"
+        "<String search:C>>\n",
+        &pattern,
+        &checkboxesBitmask);
 
     if (action) {
         if (!pattern.empty()) {
-            std::string_view pattern_{pattern.c_str(), pattern.length()}; // construct string view without terminating 0
-            auto signature = hat::parse_signature(pattern_);
 
-            if (!signature.has_value()) {
-                msg("Failed to parse pattern!\n");
-                return false;
+            std::string_view pattern_{pattern.c_str(), pattern.length()}; // construct string view without terminating 0
+
+            hat::signature signature{};
+
+            if (checkboxesBitmask & 1) { // String search
+                for (auto byte : pattern_) {
+                    signature.emplace_back(static_cast<std::byte>(byte));
+                }
+            }
+            else {
+                if (auto signature_ = hat::parse_signature(pattern_); signature_.has_value()) {
+                    signature = signature_.value();
+                }
+                else {
+                    msg("Failed to parse pattern!\n");
+                    return false;
+                }
             }
 
             show_wait_box("Scanning...");
             msg("Scanning for %s...\n", pattern.c_str());
 
             auto starttime = std::chrono::high_resolution_clock::now();
-            auto results = hat::find_all_pattern(bytes.begin(), bytes.end(), signature.value());
+            auto results = hat::find_all_pattern(bytes.begin(), bytes.end(), signature);
             auto endtime = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endtime - starttime);
 
