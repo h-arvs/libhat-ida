@@ -7,7 +7,7 @@ An [IDA Pro](https://hex-rays.com/ida-pro) pattern scanner plugin powered by [Li
 2. Move dll file into YOUR_IDA_DIRECTORY/plugins
 3. Load any binary
 4. Use default hotkey Alt+B to run libhat-ida or run via Edit -> Plugins -> Libhat
-5. Enter a ida style byte pattern in the libhat-ida GUI and press OK to execute a scan
+5. Enter an ida style byte pattern in the libhat-ida GUI and press OK to execute a scan
 ### ![gui](./res/gui.png)
 
 - Alternatively, check the String search checkbox to perform a (case sensitive) scan of the entered string
