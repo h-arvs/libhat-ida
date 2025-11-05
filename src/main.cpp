@@ -1,15 +1,14 @@
 #include "libhat_ida.hpp"
 #include <hexrays.hpp>
 
-static plugmod_t * idaapi init() {
-    return new libhat_ida;
+static plugmod_t* idaapi init() {
+    return new libhat_ida::plugin;
 }
 
-plugin_t PLUGIN =
-{
+plugin_t PLUGIN = {
     IDP_INTERFACE_VERSION,
     PLUGIN_MULTI,
-    init,
+    &init,
     nullptr,
     nullptr,
     "A pattern scanner powered by libhat.",
