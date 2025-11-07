@@ -35,9 +35,10 @@ plugin::plugin() {
 }
 
 void plugin::show_results_chooser(std::vector<hat::scan_result> results, const qstring& pattern) {
+    const ssize_t selected = results.empty() ? chooser_base_t::NO_SELECTION : 0;
     auto chooser = new results_chooser{bytes.data(), std::move(results), pattern};
     // results_chooser is not created with CH_KEEP, so the object will be deleted when the widget is deleted
-    chooser->choose(chooser_base_t::NO_SELECTION);
+    chooser->choose(selected);
 }
 
 bool plugin::run(size_t arg) {
