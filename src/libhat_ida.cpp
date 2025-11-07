@@ -2,7 +2,25 @@
 
 #include "results_chooser.hpp"
 
-libhat_ida::libhat_ida() {
+#include <chrono>
+
+static auto parse_signature(const std::string_view pattern, const bool stringSearch) {
+    // Explicit string search
+    if (stringSearch) {
+        return hat::string_to_signature(pattern);
+    }
+
+    // String search via quotes
+    if (pattern.starts_with('"') && pattern.ends_with('"') && pattern.size() >= 2) {
+        return hat::string_to_signature(pattern.substr(1, pattern.size() - 2));
+    }
+
+    return hat::parse_signature(pattern);
+}
+
+namespace libhat_ida {
+
+plugin::plugin() {
     auto start = inf_get_min_ea();
     auto end = inf_get_max_ea();
     auto size = end - start;
@@ -10,14 +28,20 @@ libhat_ida::libhat_ida() {
     bytes.resize(size);
 
     get_bytes(bytes.data(), size, start, GMB_READALL);
+
+    if (inf_get_procname() == "metapc") {
+        hints |= hat::scan_hint::x86_64;
+    }
 }
 
-void libhat_ida::show_results_chooser(std::vector<hat::scan_result> &results, qstring &pattern) {
-    auto chooser = new results_chooser{bytes.data(), results, pattern};
-    chooser->choose();
+void plugin::show_results_chooser(std::vector<hat::scan_result> results, const qstring& pattern) {
+    const ssize_t selected = results.empty() ? chooser_base_t::NO_SELECTION : 0;
+    auto chooser = new results_chooser{bytes.data(), std::move(results), pattern};
+    // results_chooser is not created with CH_KEEP, so the object will be deleted when the widget is deleted
+    chooser->choose(selected);
 }
 
-bool libhat_ida::run(size_t arg) {
+bool plugin::run(size_t arg) {
     qstring pattern;
     ushort checkboxesBitmask;
     auto action = ask_form(
@@ -27,47 +51,37 @@ bool libhat_ida::run(size_t arg) {
         &pattern,
         &checkboxesBitmask);
 
-    if (action) {
-        if (!pattern.empty()) {
+    if (!action) {
+        return false;
+    }
 
-            std::string_view pattern_{pattern.c_str(), pattern.length()}; // construct string view without terminating 0
-
-            hat::signature signature{};
-
-            if (checkboxesBitmask & 1) { // String search
-                for (auto byte : pattern_) {
-                    signature.emplace_back(static_cast<std::byte>(byte));
-                }
-            }
-            else {
-                if (auto signature_ = hat::parse_signature(pattern_); signature_.has_value()) {
-                    signature = signature_.value();
-                }
-                else {
-                    msg("Failed to parse pattern!\n");
-                    return false;
-                }
-            }
-
-            show_wait_box("Scanning...");
-            msg("Scanning for %s...\n", pattern.c_str());
-
-            auto starttime = std::chrono::high_resolution_clock::now();
-            auto results = hat::find_all_pattern(bytes.begin(), bytes.end(), signature);
-            auto endtime = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endtime - starttime);
-
-            msg("Finished scan in %lldms, found %i results!", duration, results.size());
-            hide_wait_box();
-
-            show_results_chooser(results, pattern);
-
-            return true;
-        }
+    if (pattern.empty()) {
         msg("Pattern field empty...");
         return false;
     }
 
-    return false;
+    auto signature = parse_signature(
+        {pattern.c_str(), pattern.length()},
+        checkboxesBitmask & 1);
+    if (!signature.has_value()) {
+        msg("Failed to parse pattern!\n");
+        return false;
+    }
+
+    show_wait_box("Scanning...");
+    msg("Scanning for %s...\n", pattern.c_str());
+
+    auto starttime = std::chrono::high_resolution_clock::now();
+    auto results = hat::find_all_pattern(this->bytes, signature.value(),hat::scan_alignment::X1, this->hints);
+    auto endtime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endtime - starttime);
+
+    msg("Finished scan in %lldms, found %i results!", duration, results.size());
+    hide_wait_box();
+
+    this->show_results_chooser(std::move(results), pattern);
+
+    return true;
 }
 
+}
