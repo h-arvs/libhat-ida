@@ -1,6 +1,6 @@
 include(fetchcontent)
 
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.29)
 project(libhat_ida)
 set(CMAKE_CXX_STANDARD 23)
 
@@ -20,6 +20,7 @@ FetchContent_MakeAvailable(idasdk libhat)
 
 file(GLOB_RECURSE src CONFIGURE_DEPENDS "src/*.cpp" "src/*.hpp")
 add_library(libhat_ida SHARED ${src})
+target_compile_definitions(libhat_ida PRIVATE "USE_STANDARD_FILE_FUNCTIONS")
 
 target_link_libraries(libhat_ida PRIVATE ${idasdk_SOURCE_DIR}/src/lib/x64_win_vc_64/ida.lib libhat)
 target_include_directories(libhat_ida PRIVATE ${idasdk_SOURCE_DIR}/src/include/)
