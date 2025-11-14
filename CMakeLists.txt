@@ -13,7 +13,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     libhat
     GIT_REPOSITORY https://github.com/BasedInc/libhat.git
-    GIT_TAG 2d24bcf541465f1c53ed546100feb3a8e10a5d42 # v0.8.0+1
+    GIT_TAG v0.9.0
 )
 
 FetchContent_MakeAvailable(idasdk libhat)
