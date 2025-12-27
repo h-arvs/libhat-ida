@@ -9,8 +9,8 @@ An [IDA Pro](https://hex-rays.com/ida-pro) pattern scanner plugin powered by [Li
 4. Use default hotkey Alt+B to run libhat-ida or run via Edit -> Plugins -> Libhat
 5. Enter an ida style byte pattern in the libhat-ida GUI and press OK to execute a scan
    ### ![gui](./res/gui.png)
-   Alternatively, check the String search checkbox to perform a (case sensitive) scan of the entered string OR surround
-   your query in double quotes:
+   Alternatively, check the String search checkbox to perform a scan of the entered string OR surround
+   your query in double quotes - with case sensitivity determined by the "Case sensitive" checkbox:
    ### ![gui](./res/gui_string.png)
 6. Once a scan is completed, a dockable IDA Sequence of bytes result style window will be shown, listing all yielded results
    ### ![result](./res/result.png)

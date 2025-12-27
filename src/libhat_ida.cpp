@@ -4,18 +4,42 @@
 
 #include <chrono>
 
-static auto parse_signature(const std::string_view pattern, const bool stringSearch) {
+static std::optional<std::vector<hat::signature>> cased_string_to_signature_impl(const std::string_view& pattern, const bool caseSensitive) {
+    auto signature = hat::string_to_signature(pattern);
+
+    if (!signature.has_value()) {
+        return std::nullopt;
+    }
+
+    if (caseSensitive ) {
+        return std::vector<hat::signature>{signature.value()};
+    }
+
+    for (auto& signatureElement : signature.value() | std::views::drop(1)) { // Skip first element as it is not allowed to have a partial mask!
+        signatureElement = {signatureElement.value(), static_cast<std::byte>(0b11011111)};
+    } // Apply case-insensitive mask on each element
+
+    auto signatureCopy = signature.value(); // Copy to produce new signature with opposite case on first element
+    auto& firstElement = signatureCopy.at(0);
+    firstElement = { firstElement.value() ^ static_cast<std::byte>(0b00100000)}; // Flip case-insensitive bit
+
+    return std::vector{signature.value(), signatureCopy};
+}
+
+static std::optional<std::vector<hat::signature>> parse_signature(const std::string_view pattern, const bool stringSearch, const bool caseSensitive) {
     // Explicit string search
     if (stringSearch) {
-        return hat::string_to_signature(pattern);
+        return cased_string_to_signature_impl(pattern, caseSensitive);
     }
 
     // String search via quotes
     if (pattern.starts_with('"') && pattern.ends_with('"') && pattern.size() >= 2) {
-        return hat::string_to_signature(pattern.substr(1, pattern.size() - 2));
+        return cased_string_to_signature_impl(pattern.substr(1, pattern.size() - 2), caseSensitive);
     }
 
-    return hat::parse_signature(pattern);
+    auto signature = hat::parse_signature(pattern);
+    if (!signature.has_value()) { return std::nullopt; }
+    return std::vector<hat::signature>{signature.value()};
 }
 
 namespace libhat_ida {
@@ -47,7 +71,8 @@ bool plugin::run(size_t arg) {
     auto action = ask_form(
         "Scan for a pattern\n"
         "<Pattern:q:-1:50>\n"
-        "<String search:C>>\n",
+        "<String search:C>\n"
+        "<Case sensitive:C>>\n",
         &pattern,
         &checkboxesBitmask);
 
@@ -60,10 +85,11 @@ bool plugin::run(size_t arg) {
         return false;
     }
 
-    auto signature = parse_signature(
+    auto signatures = parse_signature(
         {pattern.c_str(), pattern.length()},
-        checkboxesBitmask & 1);
-    if (!signature.has_value()) {
+        checkboxesBitmask & 1, checkboxesBitmask & 2);
+
+    if (!signatures.has_value()) {
         msg("Failed to parse pattern!\n");
         return false;
     }
@@ -72,7 +98,13 @@ bool plugin::run(size_t arg) {
     msg("Scanning for %s...\n", pattern.c_str());
 
     auto starttime = std::chrono::high_resolution_clock::now();
-    auto results = hat::find_all_pattern(this->bytes, signature.value(),hat::scan_alignment::X1, this->hints);
+    std::vector<hat::scan_result> results {};
+
+    for (auto& signature : signatures.value()) {
+        auto toJoin = find_all_pattern(this->bytes, signature,hat::scan_alignment::X1, this->hints);
+        results.insert(results.end(), toJoin.begin(), toJoin.end());
+    }
+
     auto endtime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endtime - starttime);
 
