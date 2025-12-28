@@ -2,7 +2,7 @@
 #include <loader.hpp>
 
 static plugmod_t* idaapi init() {
-    return new libhat_ida;
+    return new libhat_ida::plugin;
 }
 
 plugin_t PLUGIN =
