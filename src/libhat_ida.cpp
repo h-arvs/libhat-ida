@@ -4,6 +4,11 @@
 
 #include <chrono>
 
+static bool isCased(std::byte character) {
+    return (static_cast<char>(character) >= 'a' && static_cast<char>(character) <= 'z') ||
+           (static_cast<char>(character) >= 'A' && static_cast<char>(character) <= 'Z');
+}
+
 static std::optional<std::vector<hat::signature>> cased_string_to_signature_impl(const std::string_view& pattern, const bool caseSensitive) {
     auto signature = hat::string_to_signature(pattern);
 
@@ -16,8 +21,13 @@ static std::optional<std::vector<hat::signature>> cased_string_to_signature_impl
     }
 
     for (auto& signatureElement : signature.value() | std::views::drop(1)) { // Skip first element as it is not allowed to have a partial mask!
+        if (!isCased(signatureElement.value())) continue;
         signatureElement = {signatureElement.value(), static_cast<std::byte>(0b11011111)};
     } // Apply case-insensitive mask on each element
+
+    if (!isCased(signature.value().at(0).value())) {
+        return std::vector<hat::signature>{signature.value()};
+    } // We don't need to create a second signature to match a differently cased first element as it is not cased
 
     auto signatureCopy = signature.value(); // Copy to produce new signature with opposite case on first element
     auto& firstElement = signatureCopy.at(0);
